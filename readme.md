@@ -2,16 +2,33 @@
 
 This repo contains my solution to the 2024 Advent of Code puzzles.
 
-This year's language of choice will be go, to further explore this simple yet
-very powerful language.
+This year's language of choice will be go, to further explore its simplicity
+and power for solving this kind of algorithmic challenges.
 
-### Repo and Solution Structure
+### Repository Structure
 
-Each day will be contained in a different directory, as a different package,
-along with the sample and input for each puzzle. All solutions will be
-implemented to take input from `stdin`, and print the result in `stdout`.
+Each day's puzzle is organized in a separate directory with its own package.
+The solution for each day is implemented to take input from `stdin` and print
+the result to `stdout`. The directory for each day contains the following
+structure:
 
-### Compilation and Usage
+```
+dayXX/
+├── dayXX.go         # Solution implementation
+├── input.txt        # Raw input data for the puzzle
+├── sample.txt       # Example input extracted from the puzzle description
+└── puzzle.md        # The original puzzle description
+```
 
-TBD
+### Running the solutions
 
+To run a solution for a specific day, navigate to the corresponding directory
+and run the solution using `go run`, piping the `input.txt` file as `stdin`.
+For example, to run Day 1:
+
+```bash
+cd day01
+go run . < input.txt
+```
+
+###### 2024 | germansc

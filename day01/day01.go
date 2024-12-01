@@ -64,15 +64,15 @@ func solve(lines []string) {
 
 	fmt.Printf("Part 1: %v\n", distance)
 
-	// Part 2 - Reuse sorted lists.
-	// Since the lists are sorted, we can compute a map of occurences by binary
-	// searching the index of the next number.
+	// Part 2 - Reuse the sorted lists:
+	// Since the lists are sorted, we can compute a map of occurences simply by
+	// binary searching the index of the next number.
 	var uniq1 []int
 	count1 := make(map[int]int)
 	count2 := make(map[int]int)
 
 	for i := 0; i < len(list1); {
-		// Find the last occurrence of list1[i] using binary search
+		// Find the index of the next value that is not list1[i] using binary search.
 		end := sort.Search(len(list1), func(j int) bool { return list1[j] > list1[i] })
 		count1[list1[i]] = end - i
 
@@ -82,7 +82,7 @@ func solve(lines []string) {
 	}
 
 	for i := 0; i < len(list2); {
-		// Find the last occurrence of list2[i] using binary search
+		// Find the index of the next value that is not list2[i] using binary search.
 		end := sort.Search(len(list2), func(j int) bool { return list2[j] > list2[i] })
 		count2[list2[i]] = end - i
 

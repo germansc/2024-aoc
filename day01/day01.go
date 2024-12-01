@@ -62,7 +62,7 @@ func solve(lines []string) {
 		}
 	}
 
-	fmt.Printf("Part1: %v\n\n", distance)
+	fmt.Printf("Part 1: %v\n", distance)
 
 	// Part 2 - Reuse sorted lists.
 	// Since the lists are sorted, we can compute a map of occurences by binary
@@ -96,5 +96,5 @@ func solve(lines []string) {
 		simil += item * count1[item] * count2[item]
 	}
 
-	fmt.Printf("Part2: %v\n\n", simil)
+	fmt.Printf("Part 2: %v\n", simil)
 }

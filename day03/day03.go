@@ -14,9 +14,10 @@ var (
 	input = os.Stdin
 
 	// Regexp patterns
-	regxmul   = regexp.MustCompile(`mul\((\d{1,3}),(\d{1,3})\)`)
-	regxdo    = regexp.MustCompile(`do`)
-	regxdonot = regexp.MustCompile(`don't`)
+	regpart1 = regexp.MustCompile(`mul\((\d{1,3}),(\d{1,3})\)`)
+
+	// This regexp matches a 'mul(xxx,xxx)', a 'do()' or a 'don't()'
+	regpart2 = regexp.MustCompile(`mul\((\d{1,3}),(\d{1,3})\)|do\(\)|don't\(\)`)
 )
 
 func readInput(r io.Reader) []string {
@@ -41,104 +42,41 @@ func main() {
 
 // Part solutions.
 func solve(lines []string) {
+	bulk := strings.Join(lines, "")
 	part1 := 0
 
-	for _, line := range lines {
-		part1 += score(line)
+	// Get all mul(xxx,xxx) matches.
+	matches := regpart1.FindAllStringSubmatch(bulk, -1)
+	for _, match := range matches {
+		part1 += score(match[1], match[2])
 	}
 
 	fmt.Printf("Part1: %d\n", part1)
 
 	// Part 2
-	// Join the lines in case there are do's and don't between lines
-	bulk := strings.Join(lines, "")
+	part2 := 0
 
-	// Find the indexes of all keywords
-	var dos []int
-	var donts []int
-	d1 := regxdo.FindAllStringIndex(bulk, -1)
-	d2 := regxdonot.FindAllStringIndex(bulk, -1)
-
-	// Get the starting index of each set.
-	for _, d := range d1 {
-		dos = append(dos, d[0])
-	}
-
-	for _, d := range d2 {
-		donts = append(donts, d[0])
-	}
-
-	// Discards don'ts from dos
-	dos = filter(dos, donts)
-
-	// Discard disabled sections.
-	ie := 0
-	id := 0
-	enabled := ""
-
-	for {
-		// Find the next index of a disabled section.
-		i := 0
-		for ; i < len(donts); i++ {
-			if donts[i] > ie {
-				break
+	// Get all matches, but only score those when the input is enabled.
+	enabled := true
+	matches = regpart2.FindAllStringSubmatch(bulk, -1)
+	for _, match := range matches {
+		switch match[0] {
+		case "do()":
+			enabled = true
+		case "don't()":
+			enabled = false
+		default:
+			if enabled {
+				part2 += score(match[1], match[2])
 			}
 		}
-
-		if i < len(donts) {
-			id = donts[i]
-			donts = donts[i:]
-		} else {
-			id = len(bulk)
-		}
-
-		// Append enabled data.
-		enabled += bulk[ie:id]
-
-		i = 0
-		for ; i < len(dos); i++ {
-			if dos[i] > id {
-				break
-			}
-		}
-
-		if i < len(dos) {
-			ie = dos[i]
-			dos = dos[i:]
-		} else {
-			break
-		}
 	}
 
-	part2 := score(enabled)
 	fmt.Printf("Part2: %d\n", part2)
 }
 
-func score(line string) int {
-	score := 0
-	// Get all matches.
-	matches := regxmul.FindAllStringSubmatch(line, -1)
-	for _, match := range matches {
-		n1, _ := strconv.Atoi(string(match[1]))
-		n2, _ := strconv.Atoi(string(match[2]))
-		score += n1 * n2
-	}
-	return score
-}
-
-func filter(data, remove []int) []int {
-	remmap := make(map[int]struct{})
-	for _, i := range remove {
-		remmap[i] = struct{}{}
-	}
-
-	// Filter the original slice
-	result := []int{}
-	for _, i := range data {
-		if _, found := remmap[i]; !found {
-			result = append(result, i)
-		}
-	}
-
-	return result
+func score(n1, n2 string) int {
+	i1, _ := strconv.Atoi(string(n1))
+	i2, _ := strconv.Atoi(string(n2))
+	return i1 * i2
 }

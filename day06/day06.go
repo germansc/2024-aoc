@@ -183,7 +183,7 @@ func solve(lines []string) {
 	possible := make(map[int]bool)
 
 	x, y = cm.pointFromIdx(i)
-	for k, _ := range visited {
+	for k, v := range visited {
 		if i == k {
 			// Skip the starting point.
 			continue
@@ -192,8 +192,15 @@ func solve(lines []string) {
 		// Put a new rock.
 		cm.data[k] = '#'
 
-		// run the path
-		if _, loop := runpath(cm, x, y, U); loop {
+		// Only care about the first direction the cell is crossed.
+		d := v[0]
+
+		// run the path from the point before this new stone.
+		x, y = cm.pointFromIdx(k)
+		dp := rotate(rotate(d))
+		x, y := next(x, y, dp)
+
+		if _, loop := runpath(cm, x, y, d); loop {
 			possible[k] = true
 		}
 
@@ -201,5 +208,5 @@ func solve(lines []string) {
 		cm.data[k] = '.'
 	}
 
-	fmt.Printf("Part 1: %v\n", len(possible))
+	fmt.Printf("Part 2: %v\n", len(possible))
 }

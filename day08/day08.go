@@ -110,4 +110,35 @@ func solve(lines []string) {
 	}
 
 	fmt.Printf("Part 1: %v\n", len(nodes))
+
+	nodes2 := make(map[int][]byte)
+	// Iterate every pair of antenas and compute its antinodes.
+	for c, points := range antenas {
+		for i := range len(points) - 1 {
+			for _, p2 := range points[i+1:] {
+				p1 := points[i]
+				x1, y1 := m.pointFromIdx(p1)
+				x2, y2 := m.pointFromIdx(p2)
+
+				dx := x2 - x1
+				dy := y2 - y1
+
+				// Add nodes at multiples of the distance until we reach an invalid point.
+				k := 0 // The original point is also an antinode, so start at 0.
+				for m.isValidPoint(x1-k*dx, y1-k*dy) {
+					nodes2[m.idxFromPoint(x1-k*dx, y1-k*dy)] = append(nodes2[m.idxFromPoint(x1-k*dx, y1-k*dy)], c)
+					k++
+				}
+
+				// Add nodes in the other direction until we reach an invalid point.
+				k = 1
+				for m.isValidPoint(x1+k*dx, y1+k*dy) {
+					nodes2[m.idxFromPoint(x1+k*dx, y1+k*dy)] = append(nodes2[m.idxFromPoint(x1+k*dx, y1+k*dy)], c)
+					k++
+				}
+			}
+		}
+	}
+
+	fmt.Printf("Part 2: %v\n", len(nodes2))
 }

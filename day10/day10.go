@@ -68,16 +68,17 @@ func solve(lines []string) {
 
 	// Part 1. Disctint uphills paths from 0 to 9.
 	part1 := 0
+	part2 := 0
 	for _, s := range startpoints {
-		pc := pathCount(&hmap, s)
-		part1 += pc
-		fmt.Printf("Point %v has a score of %v\n", s, pc)
+		part1 += pathCount(&hmap, s, false)
+		part2 += pathCount(&hmap, s, true)
 	}
 
 	fmt.Printf("Part 1: %v\n", part1)
+	fmt.Printf("Part 2: %v\n", part2)
 }
 
-func pathCount(h *heightmap, start point) int {
+func pathCount(h *heightmap, start point, canRepeat bool) int {
 	count := 0
 	queue := []point{start}
 	visited := make(map[point]struct{})
@@ -86,8 +87,8 @@ func pathCount(h *heightmap, start point) int {
 		p := queue[0]
 		queue = queue[1:]
 
-		// Skip visited cells.
-		if _, ok := visited[p]; ok {
+		// Skip visited cells if we can't repeat them.
+		if _, ok := visited[p]; ok && !canRepeat {
 			continue
 		}
 

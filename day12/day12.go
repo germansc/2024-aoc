@@ -75,8 +75,47 @@ func (p plot) perimeter() int {
 	return per
 }
 
+func (p plot) corners() int {
+	corners := 0
+
+	// Num of sides = num of corners.
+	for k := range p.cells {
+		// Gather info about the 8 surrounding cells to count corners.
+		_, ul := p.cells[point{k.x - 1, k.y - 1}]
+		_, u := p.cells[point{k.x, k.y - 1}]
+		_, ur := p.cells[point{k.x + 1, k.y - 1}]
+		_, l := p.cells[point{k.x - 1, k.y}]
+		_, r := p.cells[point{k.x + 1, k.y}]
+		_, dl := p.cells[point{k.x - 1, k.y + 1}]
+		_, d := p.cells[point{k.x, k.y + 1}]
+		_, dr := p.cells[point{k.x + 1, k.y + 1}]
+
+		// Top-left corner:
+		if (l == u) && (!l || !ul) {
+			corners++
+		}
+
+		// Top-right corner:
+		if (r == u) && (!r || !ur) {
+			corners++
+		}
+
+		// Bot-right corner:
+		if (r == d) && (!r || !dr) {
+			corners++
+		}
+
+		// bot-left corner:
+		if (l == d) && (!l || !dl) {
+			corners++
+		}
+	}
+
+	return corners
+}
+
 func (p plot) String() string {
-	return fmt.Sprintf("Region of %c plants | area: %v | perimeter: %v", p.crop, len(p.cells), p.perimeter())
+	return fmt.Sprintf("Region of %c plants | area: %v | perimeter: %v | corners: %v", p.crop, len(p.cells), p.perimeter(), p.corners())
 }
 
 func newPlot(start point, cm *charmap) plot {
@@ -150,9 +189,12 @@ func solve(lines []string) {
 	}
 
 	part1 := 0
+	part2 := 0
 	for _, p := range plots {
 		part1 += len(p.cells) * p.perimeter()
+		part2 += len(p.cells) * p.corners()
 	}
 
 	fmt.Printf("Part 1: %v\n", part1)
+	fmt.Printf("Part 2: %v\n", part2)
 }

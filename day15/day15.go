@@ -93,7 +93,7 @@ func solve(lines []string) {
 	// Part 2
 	robot = point{start.x * 2, start.y}
 	for _, d := range moves {
-		robot = move2(&m2, robot, d)
+		robot = move(&m2, robot, d)
 	}
 
 	part2 := 0
@@ -135,102 +135,6 @@ func expandMap(m *heightmap) heightmap {
 }
 
 func move(m *heightmap, p point, direction rune) point {
-	cellsToSpace := 0
-	switch direction {
-	case '<':
-		// Find an empty place to the left.
-		for k := range p.x {
-			if m.data[point{p.x - k, p.y}] == '#' {
-				break
-			}
-			if m.data[point{p.x - k, p.y}] == '.' {
-				cellsToSpace = k
-				break
-			}
-		}
-		if cellsToSpace == 0 {
-			return p
-		}
-
-		// Shift all items in-between.
-		for k := range cellsToSpace {
-			m.data[point{p.x - cellsToSpace + k, p.y}] = m.data[point{p.x - cellsToSpace + k + 1, p.y}]
-		}
-		m.data[p] = '.'
-		return point{p.x - 1, p.y}
-
-	case '>':
-		// Find an empty place to the left.
-		for k := range m.width - p.x {
-			if m.data[point{p.x + k, p.y}] == '#' {
-				break
-			}
-			if m.data[point{p.x + k, p.y}] == '.' {
-				cellsToSpace = k
-				break
-			}
-		}
-		if cellsToSpace == 0 {
-			return p
-		}
-
-		// Shift all items in-between.
-		for k := range cellsToSpace {
-			m.data[point{p.x + cellsToSpace - k, p.y}] = m.data[point{p.x + cellsToSpace - k - 1, p.y}]
-		}
-		m.data[p] = '.'
-		return point{p.x + 1, p.y}
-
-	case 'v':
-		// Find an empty place to the left.
-		for k := range m.height - p.y {
-			if m.data[point{p.x, p.y + k}] == '#' {
-				break
-			}
-			if m.data[point{p.x, p.y + k}] == '.' {
-				cellsToSpace = k
-				break
-			}
-		}
-		if cellsToSpace == 0 {
-			return p
-		}
-
-		// Shift all items in-between.
-		for k := range cellsToSpace {
-			m.data[point{p.x, p.y + cellsToSpace - k}] = m.data[point{p.x, p.y + cellsToSpace - k - 1}]
-		}
-		m.data[p] = '.'
-		return point{p.x, p.y + 1}
-
-	case '^':
-		// Find an empty place to the left.
-		for k := range p.y {
-			if m.data[point{p.x, p.y - k}] == '#' {
-				break
-			}
-			if m.data[point{p.x, p.y - k}] == '.' {
-				cellsToSpace = k
-				break
-			}
-		}
-		if cellsToSpace == 0 {
-			return p
-		}
-
-		// Shift all items in-between.
-		for k := range cellsToSpace {
-			m.data[point{p.x, p.y - cellsToSpace + k}] = m.data[point{p.x, p.y - cellsToSpace + k + 1}]
-		}
-
-		m.data[p] = '.'
-		return point{p.x, p.y - 1}
-	}
-
-	return point{}
-}
-
-func move2(m *heightmap, p point, direction rune) point {
 	canMove := true
 	diff := point{}
 	newVal := make(map[point]rune)
@@ -275,6 +179,9 @@ func move2(m *heightmap, p point, direction rune) point {
 		// Add more items what to add to the queue.
 		queue = append(queue, np)
 		visited[np] = true
+
+		// Skip the vertical draggin of wide boxes if the move is not vertical,
+		// or the boxes are not wide.
 		if !vertical {
 			continue
 		}

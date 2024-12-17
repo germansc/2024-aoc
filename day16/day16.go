@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strings"
 )
@@ -36,6 +38,10 @@ func main() {
 }
 
 type point struct{ x, y int }
+type dpoint struct {
+	p point
+	d int
+}
 
 type charmap struct {
 	data          []rune
@@ -71,56 +77,152 @@ func solve(lines []string) {
 	start := m.point(i)
 
 	// Part 1
-	part1 := runmaze(&m, start)
-
-	fmt.Println("Part 1:", part1)
+	bestcost, seats := runmaze(&m, start)
+	fmt.Println("Part 1:", bestcost)
+	fmt.Println("Part 2:", seats)
 }
 
-func plotMap(m *charmap) {
+func plotMap(m *charmap, modifier map[point]bool) {
 	for y := range m.height {
 		for x := range m.width {
-			fmt.Printf("%c", m.data[m.index(point{x, y})])
+			if modifier != nil && modifier[point{x, y}] {
+				fmt.Printf("%c", 'O')
+			} else {
+				fmt.Printf("%c", m.data[m.index(point{x, y})])
+			}
 		}
 		fmt.Println()
 	}
 }
 
-func runmaze(m *charmap, start point) int {
-	cellscore := make(map[point]int)
-	celldir := make(map[point]int)
-	cellscore[start] = 0
-	celldir[start] = 0
+type node struct {
+	cost int
+	p    point
+	dir  int
+	from dpoint
+}
 
-	queue := []point{start}
+type PriorityQueue []*node
 
-	for len(queue) != 0 {
-		cp := queue[0]
-		queue = queue[1:]
+func (pq PriorityQueue) Len() int {
+	return len(pq)
+}
 
-		// Get the next exploration points.
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].cost < pq[j].cost
+}
+
+func (pq PriorityQueue) Swap(i, j int) { pq[i], pq[j] = pq[j], pq[i] }
+
+func (pq *PriorityQueue) Push(x any) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	item := x.(*node)
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() any {
+	old := *pq
+	n := len(old)
+	x := old[n-1]
+	*pq = old[0 : n-1]
+	return x
+}
+
+func runmaze(m *charmap, start point) (int, int) {
+	cellcost := make(map[dpoint]int)
+	cellcost[dpoint{start, 0}] = 0
+	cellfrom := make(map[dpoint][]dpoint)
+	ep := m.point(strings.IndexRune(string(m.data), 'E'))
+	bestcost := math.MaxInt
+	endstate := dpoint{}
+
+	pq := &PriorityQueue{&node{cost: 0, p: start, dir: 0}}
+	heap.Init(pq)
+
+	for pq.Len() != 0 {
+		cnode := heap.Pop(pq).(*node)
+		if cv, ok := cellcost[dpoint{cnode.p, cnode.dir}]; ok && cnode.cost > cv {
+			continue
+		}
+
+		cellcost[dpoint{cnode.p, cnode.dir}] = cnode.cost
+		if cnode.p == ep {
+			if cnode.cost > bestcost {
+				break
+			}
+			bestcost = cnode.cost
+			endstate = dpoint{cnode.p, cnode.dir}
+		}
+
+		newrec := true
+		for _, v := range cellfrom[dpoint{cnode.p, cnode.dir}] {
+			if v == cnode.from {
+				newrec = false
+			}
+		}
+
+		if newrec {
+			cellfrom[dpoint{cnode.p, cnode.dir}] = append(cellfrom[dpoint{cnode.p, cnode.dir}], cnode.from)
+		}
+
+		// Get the next exploration points from this node.
 		for k := range 4 {
 			// Skip 180° turns
 			if k == 2 {
 				continue
 			}
 
-			diff := dir[(celldir[cp]+k)%4]
-			np := point{cp.x + diff.x, cp.y + diff.y}
-			npscore := cellscore[cp] + 1 + 1000*(k%2)
+			diff := dir[(cnode.dir+k)%4]
+			np := point{cnode.p.x + diff.x, cnode.p.y + diff.y}
+
+			// Skip if wall.
 			if m.data[m.index(np)] == '#' {
 				continue
 			}
 
-			if cs, ok := cellscore[np]; !ok || npscore < cs {
-				queue = append(queue, np)
-				cellscore[np] = npscore
-				celldir[np] = (celldir[cp] + k) % 4
+			// Skip already processed cells.
+			cost := cnode.cost + 1 + 1000*(k%2)
+			if v, ok := cellcost[dpoint{np, (cnode.dir + k) % 4}]; ok && cost > v {
+				continue
 			}
+
+			heap.Push(pq,
+				&node{cost: cost, p: np, dir: (cnode.dir + k) % 4,
+					from: dpoint{cnode.p, cnode.dir}})
 		}
 	}
 
-	// Check the best score at the exit point.
-	i := strings.IndexRune(string(m.data), 'E')
+	// Part 2. Backtrack from the end position, counting visted cells.
+	visited := make(map[dpoint]bool)
+	queue := []dpoint{endstate}
+	visited[endstate] = true
 
-	return cellscore[m.point(i)]
+	seats := make(map[point]bool)
+	seats[endstate.p] = true
+
+	for len(queue) != 0 {
+		cdp := queue[0]
+		queue = queue[1:]
+
+		if cdp.p == start {
+			break
+		}
+
+		fmt.Println(cdp, " from:", cellfrom[cdp])
+		for _, v := range cellfrom[cdp] {
+			if _, ok := visited[v]; ok {
+				continue
+			}
+
+			queue = append(queue, v)
+			visited[v] = true
+			seats[v.p] = true
+		}
+	}
+
+	// Can be used to plot the final marked seats.
+	// plotMap(m, seats)
+
+	return bestcost, len(seats)
 }

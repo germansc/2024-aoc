@@ -54,7 +54,7 @@ func solve(lines []string) {
 
 	// Part 2:
 	part2 := 0
-	for _, r := range requests {
+	for _, r := range possible {
 		comb := possibleCombinations(r, towels)
 		fmt.Println(r, "has combinations:", comb)
 		part2 += comb

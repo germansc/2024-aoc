@@ -80,9 +80,8 @@ func solve(lines []string) {
 	start, end := g.point(strings.IndexRune(string(g.data), 'S')), g.point(strings.IndexRune(string(g.data), 'E'))
 	steps := bfs(&g, start, end)
 
-	cheatpoints := cheatAnalysis(steps, &g)
-
 	part1 := 0
+	cheatpoints := cheatAnalysis(steps, &g)
 	for _, v := range cheatpoints {
 		if v >= 100 {
 			part1++
@@ -90,6 +89,15 @@ func solve(lines []string) {
 	}
 
 	fmt.Println("Part 1:", part1)
+
+	part2 := part1
+	cheatpoints = moaaarCheats(steps, &g)
+	for _, v := range cheatpoints {
+		if v >= 100 {
+			part2++
+		}
+	}
+	fmt.Println("Part 2:", part2)
 }
 
 // Bfs
@@ -128,15 +136,13 @@ func cheatAnalysis(steps map[point]int, g *grid) map[struct{ s, e point }]int {
 
 	// For each point of the path, check for neighbours at distance 2, that
 	// have biggest delta steps than 2.
-
 	for k, si := range steps {
-		for _, d := range []point{{2, 0}, {-2, 0}, {0, 2}, {0, -2}} {
-			np := point{k.x + d.x, k.y + d.y}
+		for _, np := range manhattanPoints(k, 2) {
 			if !g.isValid(np) {
 				continue
 			}
 
-			if se, ok := steps[np]; !ok || se-si <= 2 {
+			if se, ok := steps[np]; !ok || (se-si) <= 2 {
 				continue
 			} else {
 				cheats[struct{ s, e point }{k, np}] = se - si - 2
@@ -145,4 +151,55 @@ func cheatAnalysis(steps map[point]int, g *grid) map[struct{ s, e point }]int {
 	}
 
 	return cheats
+}
+
+func moaaarCheats(steps map[point]int, g *grid) map[struct{ s, e point }]int {
+	cheats := make(map[struct{ s, e point }]int)
+
+	// Range over all points at manhattan distances 3-20, and compute the
+	// skipping distance. No need to test points at 2, since we already did for
+	// part 1.
+	for k, si := range steps {
+		for dist := 3; dist < 21; dist++ {
+			for _, np := range manhattanPoints(k, dist) {
+				if !g.isValid(np) {
+					continue
+				}
+
+				if se, ok := steps[np]; !ok || (se-si) <= dist {
+					continue
+				} else {
+					cheats[struct{ s, e point }{k, np}] = se - si - dist
+				}
+			}
+		}
+	}
+
+	return cheats
+}
+
+func manhattanPoints(p point, dist int) []point {
+	points := []point{}
+
+	// For each possible x-offset from -distance to +distance
+	for dx := -dist; dx <= dist; dx++ {
+		// The remaining distance must be used for the y-offset
+		dy := dist - abs(dx)
+
+		if dy >= 0 {
+			points = append(points, point{p.x + dx, p.y + dy})
+			if dy != 0 {
+				points = append(points, point{p.x + dx, p.y - dy})
+			}
+		}
+	}
+
+	return points
+}
+
+func abs(x int) int {
+	if x > 0 {
+		return x
+	}
+	return -x
 }

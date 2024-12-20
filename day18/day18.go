@@ -31,7 +31,7 @@ func readInput(r io.Reader) []string {
 }
 
 func main() {
-	fmt.Printf("AoC 2024 - Day 15\n")
+	fmt.Printf("AoC 2024 - Day 18\n")
 	lines := readInput(input)
 	solve(lines)
 }
